@@ -12,6 +12,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import JobList from './pages/JobList';
 import CreateJob from './pages/CreateJob';
 import JobDetail from './pages/JobDetail';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -42,6 +43,11 @@ function App() {
             <Route path="/engagements/:id" element={
               <ProtectedRoute>
                 <EngagementDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile/:id" element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             } />
           </Routes>
