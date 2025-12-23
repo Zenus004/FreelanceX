@@ -58,20 +58,15 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
-    const trimmedEmail = email.trim().toLowerCase();
-
-    console.log(`Login attempt for: '${trimmedEmail}'`);
 
     try {
-        const user = await User.findOne({ email: trimmedEmail }).select('+password');
+        const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
-            console.log('User not found in DB');
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
         const isMatch = await user.matchPassword(password);
-        console.log(`Password match for ${trimmedEmail}: ${isMatch}`);
 
         if (isMatch) {
             const accessToken = generateAccessToken(user._id);
@@ -146,15 +141,82 @@ const getUserProfile = async (req, res) => {
     }
 };
 
-const resetPassword = async (req, res) => {
+const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
+
+const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
-    // Simulate email sending
-    console.log(`Password reset requested for: ${email}`);
+    try {
+        const user = await User.findOne({ email });
 
-    // In a real app, we would generate a token, save it to DB, and email it.
-    // Here we just simulate success.
-    res.json({ message: 'If an account exists, a password reset link has been sent.' });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Get reset token
+        const resetToken = user.getResetPasswordToken();
+
+        await user.save({ validateBeforeSave: false });
+
+        // Create reset url
+        // In a real production app, this should match your frontend route
+        const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+
+        const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Password reset token',
+                message
+            });
+
+            res.status(200).json({ success: true, data: 'Email sent' });
+        } catch (error) {
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpire = undefined;
+
+            await user.save({ validateBeforeSave: false });
+
+            return res.status(500).json({ message: 'Email could not be sent' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    try {
+        // Get hashed token
+        const resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(req.params.resetToken)
+            .digest('hex');
+
+        const user = await User.findOne({
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid token' });
+        }
+
+        // Set new password
+        user.password = req.body.password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save();
+
+        // Log user in directly after reset? Or just send success message
+        // For security, usually better to force login, but we can issue token here if desired.
+        // Let's just return success for now.
+        res.status(200).json({ message: 'Password updated success' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 module.exports = {
@@ -163,5 +225,6 @@ module.exports = {
     logoutUser,
     refreshAccessToken,
     getUserProfile,
+    forgotPassword,
     resetPassword
 };

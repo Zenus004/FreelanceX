@@ -37,7 +37,6 @@ app.use('/api/engagements', require('./routes/engagementRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
-app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Serve uploads folder
