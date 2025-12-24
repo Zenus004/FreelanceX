@@ -15,11 +15,18 @@ import {
     User,
     Briefcase,
     Star,
-    X
+    X,
+    MessageSquare,
+    AlertTriangle,
+    FileText,
+    Send
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
-const EngagementDetail = () => {
+import ErrorBoundary from '../components/ErrorBoundary';
+
+const EngagementDetailContent = () => {
     const { id } = useParams();
     const { user, refreshProfile } = useAuth();
     const [engagement, setEngagement] = useState(null);
@@ -36,63 +43,88 @@ const EngagementDetail = () => {
     const [reviewComment, setReviewComment] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
 
+    const fetchEngagement = async () => {
+        try {
+            const { data } = await api.get(`/engagements/${id}`);
+            setEngagement(data.engagement);
+            setMilestones(data.milestones || []);
+            console.log('Engagement Data Loaded:', data);
+        } catch (error) {
+            console.error('Error fetching engagement:', error);
+            console.error('Response Data:', error.response?.data);
+            toast.error('Failed to load engagement details.');
+            setMilestones([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchEngagement = async () => {
-            try {
-                const { data } = await api.get(`/engagements/${id}`);
-                setEngagement(data.engagement);
-                setMilestones(data.milestones);
-            } catch (error) {
-                console.error('Error fetching engagement:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchEngagement();
     }, [id]);
 
     const handleCreateMilestone = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await api.post(`/engagements/${id}/milestones`, {
+            await api.post(`/engagements/${id}/milestones`, {
                 description,
                 amount: Number(amount)
             });
-            setMilestones([...milestones, data]);
             setDescription('');
             setAmount('');
-            // Refresh engagement to update escrow balance
-            const engRes = await api.get(`/engagements/${id}`);
-            setEngagement(engRes.data.engagement);
+            toast.success('Milestone created successfully!');
+            fetchEngagement(); // Refresh
             refreshProfile();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to create milestone');
+            toast.error(error.response?.data?.message || 'Failed to create milestone');
         }
     };
 
     const handleApproveMilestone = async (milestoneId) => {
         try {
             await api.patch(`/engagements/milestones/${milestoneId}/approve`);
-            // Refresh data
-            const { data } = await api.get(`/engagements/${id}`);
-            setEngagement(data.engagement);
-            setMilestones(data.milestones);
+            toast.success('Milestone approved and funds released!');
+            fetchEngagement(); // Refresh
             refreshProfile();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to approve milestone');
+            toast.error(error.response?.data?.message || 'Failed to approve milestone');
         }
     };
 
-    const handleCompleteEngagement = async () => {
-        if (!window.confirm('Are you sure you want to complete this contract? This will close the job.')) return;
+    const handleCompleteContract = async () => {
+        toast((t) => (
+            <div className="flex flex-col gap-2">
+                <span className="font-medium">Complete this contract?</span>
+                <span className="text-sm text-gray-500">This will close the job.</span>
+                <div className="flex gap-2 mt-1">
+                    <button
+                        className="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700"
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            confirmCompleteContract();
+                        }}
+                    >
+                        Confirm
+                    </button>
+                    <button
+                        className="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300"
+                        onClick={() => toast.dismiss(t.id)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
+    };
+
+    const confirmCompleteContract = async () => {
         try {
             await api.patch(`/engagements/${id}/complete`);
-            // Refresh data
-            const { data } = await api.get(`/engagements/${id}`);
-            setEngagement(data.engagement);
+            toast.success('Contract completed successfully!');
+            fetchEngagement();
             refreshProfile();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to complete engagement');
+            toast.error(error.response?.data?.message || 'Failed to complete engagement');
         }
     };
 
@@ -106,9 +138,15 @@ const EngagementDetail = () => {
                 comment: reviewComment
             });
             setShowReviewModal(false);
-            alert('Review submitted successfully!');
+            toast.success('Review submitted successfully!');
+            fetchEngagement();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to submit review');
+            console.error('Review Error:', error);
+            if (error.response?.data?.message?.includes('E11000') || error.response?.data?.message?.includes('duplicate key')) {
+                toast.error('You have already reviewed this engagement.');
+            } else {
+                toast.error(error.response?.data?.message || 'Failed to submit review');
+            }
         } finally {
             setSubmittingReview(false);
         }
@@ -140,40 +178,48 @@ const EngagementDetail = () => {
                                 <Briefcase className="w-4 h-4 mr-2" />
                                 <span className="text-sm font-semibold uppercase tracking-wide">Active Engagement</span>
                             </div>
-                            <h1 className="text-2xl font-bold text-gray-900">{engagement.job.title}</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">{engagement?.job?.title || 'Untitled Job'}</h1>
                             <div className="flex items-center text-gray-500 text-sm mt-1 space-x-4">
                                 <span className="flex items-center">
                                     <User className="w-4 h-4 mr-1" />
                                     {user.role === 'client' ? (
-                                        <Link to={`/profile/${engagement.freelancer._id}`} className="hover:underline hover:text-indigo-600">
-                                            {engagement.freelancer.name}
-                                        </Link>
+                                        engagement.freelancer ? (
+                                            <Link to={`/profile/${engagement.freelancer._id}`} className="hover:underline hover:text-indigo-600">
+                                                {engagement.freelancer.name}
+                                            </Link>
+                                        ) : (
+                                            <span className="text-gray-500">Unknown Freelancer</span>
+                                        )
                                     ) : (
-                                        <Link to={`/profile/${engagement.client._id}`} className="hover:underline hover:text-indigo-600">
-                                            {engagement.client.name}
-                                        </Link>
+                                        engagement.client ? (
+                                            <Link to={`/profile/${engagement.client._id}`} className="hover:underline hover:text-indigo-600">
+                                                {engagement.client.name}
+                                            </Link>
+                                        ) : (
+                                            <span className="text-gray-500">Unknown Client</span>
+                                        )
                                     )}
                                 </span>
-                                <span className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${engagement.status === 'active' ? 'bg-green-100 text-green-700' :
-                                    engagement.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                                <span className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${engagement?.status === 'active' ? 'bg-green-100 text-green-700' :
+                                    engagement?.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
                                     }`}>
-                                    <span className={`w-2 h-2 rounded-full mr-1.5 ${engagement.status === 'active' ? 'bg-green-500' :
-                                        engagement.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
+                                    <span className={`w-2 h-2 rounded-full mr-1.5 ${engagement?.status === 'active' ? 'bg-green-500' :
+                                        engagement?.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
                                         }`}></span>
-                                    {engagement.status.toUpperCase()}
+                                    {engagement?.status?.toUpperCase() || 'UNKNOWN'}
                                 </span>
                             </div>
                         </div>
                         <div className="flex gap-4">
                             <div className="text-right p-3 bg-gray-50 rounded-lg">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide">Total Value</p>
-                                <p className="text-xl font-bold text-gray-900">${engagement.totalAmount}</p>
+                                <p className="text-xl font-bold text-gray-900">${engagement?.totalAmount || 0}</p>
                             </div>
                             <div className="text-right p-3 bg-green-50 rounded-lg border border-green-100">
                                 <p className="text-xs text-green-600 uppercase tracking-wide flex items-center justify-end">
                                     <Shield className="w-3 h-3 mr-1" /> In Escrow
                                 </p>
-                                <p className="text-xl font-bold text-green-700">${engagement.escrowBalance}</p>
+                                <p className="text-xl font-bold text-green-700">${engagement?.escrowBalance || 0}</p>
                             </div>
                         </div>
                     </div>
@@ -183,7 +229,7 @@ const EngagementDetail = () => {
                     {/* Left Column: Milestones */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Actions */}
-                        {user.role === 'client' && engagement.status !== 'completed' && (
+                        {user.role === 'client' && engagement?.status !== 'completed' && (
                             <div className="space-y-6">
                                 {/* Add Milestone Card */}
                                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -226,7 +272,7 @@ const EngagementDetail = () => {
                                         <p className="text-sm text-gray-500">End the contract when all work is done.</p>
                                     </div>
                                     <button
-                                        onClick={handleCompleteEngagement}
+                                        onClick={handleCompleteContract}
                                         className="px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 font-medium text-sm transition-colors"
                                     >
                                         Mark as Complete
@@ -236,7 +282,7 @@ const EngagementDetail = () => {
                         )}
 
                         {/* Leave Review CTA (For both parties if completed) */}
-                        {engagement.status === 'completed' && (
+                        {engagement?.status === 'completed' && (
                             <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6 text-center">
                                 <h3 className="font-bold text-gray-900 mb-2">Engagement Completed</h3>
                                 <p className="text-gray-600 text-sm mb-4">Don't forget to rate your experience!</p>
@@ -260,7 +306,7 @@ const EngagementDetail = () => {
                                         No milestones created yet.
                                     </div>
                                 ) : (
-                                    milestones.map((milestone, index) => (
+                                    milestones?.map((milestone, index) => (
                                         <motion.div
                                             key={milestone._id}
                                             initial={{ opacity: 0, x: -20 }}
@@ -375,5 +421,11 @@ const EngagementDetail = () => {
         </div>
     );
 };
+
+const EngagementDetail = () => (
+    <ErrorBoundary>
+        <EngagementDetailContent />
+    </ErrorBoundary>
+);
 
 export default EngagementDetail;

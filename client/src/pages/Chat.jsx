@@ -17,7 +17,7 @@ const Chat = ({ roomId }) => {
         const fetchMessages = async () => {
             try {
                 const { data } = await api.get(`/chat/${roomId}/messages`);
-                setMessages(data);
+                setMessages(data || []);
             } catch (error) {
                 console.error('Error fetching messages:', error);
             }
@@ -116,14 +116,14 @@ const Chat = ({ roomId }) => {
                                 <div>
                                     <div
                                         className={`p-3 rounded-2xl text-sm shadow-sm ${isMe
-                                                ? 'bg-indigo-600 text-white rounded-tr-none'
-                                                : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none'
+                                            ? 'bg-indigo-600 text-white rounded-tr-none'
+                                            : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none'
                                             }`}
                                     >
                                         <p className="whitespace-pre-wrap">{msg.content}</p>
                                     </div>
                                     <span className={`text-[10px] text-gray-400 mt-1 block ${isMe ? 'text-right' : 'text-left'}`}>
-                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                     </span>
                                 </div>
                             </div>

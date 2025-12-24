@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import FreelancerProfile from '../components/profile/FreelancerProfile';
 import ClientProfile from '../components/profile/ClientProfile';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Star, Mail, Briefcase, MapPin, Calendar, Edit, Loader } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Profile = () => {
     const { id } = useParams();
@@ -67,7 +68,14 @@ const Profile = () => {
     const handleEdit = () => {
         setIsEditing(true);
         // Implement modal logic or navigate to settings
-        alert('Edit functionality would open a modal here to update fields like Title, Bio, and Hourly Rate.');
+        toast('Edit functionality would open a modal here to update fields like Title, Bio, and Hourly Rate.', {
+            icon: 'ℹ️',
+            style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+            },
+        });
     };
 
     return (

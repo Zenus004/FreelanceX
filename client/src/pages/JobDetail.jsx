@@ -11,12 +11,12 @@ import {
     User,
     Calendar,
     CheckCircle,
-    AlertCircle,
-    Send,
+    ArrowLeft,
     Star,
     MessageSquare,
     FileText
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import StatusBadge from '../components/dashboard/StatusBadge';
 
 const JobDetail = () => {
@@ -83,28 +83,66 @@ const JobDetail = () => {
                 deliveryDays: Number(deliveryDays),
                 coverLetter
             });
-            alert('Proposal submitted successfully!');
+            toast.success('Proposal submitted successfully!'); // Changed from alert to toast
             navigate('/dashboard');
         } catch (err) {
             setSubmitError(err.response?.data?.message || 'Failed to submit proposal');
+            toast.error(err.response?.data?.message || 'Failed to submit proposal'); // Added toast for error
             setSubmitting(false);
         }
     };
 
     const handleAcceptProposal = async (proposalId) => {
-        if (!confirm('Are you sure you want to accept this proposal? This will start the engagement.')) return;
-        try {
-            await api.patch(`/proposals/${proposalId}`, { status: 'accepted' });
-            alert('Proposal accepted! Engagement created.');
-            // Refresh proposals
-            const proposalsRes = await api.get(`/proposals/job/${id}`);
-            setProposals(proposalsRes.data);
-            // Refresh job status
-            const jobRes = await api.get(`/jobs/${id}`);
-            setJob(jobRes.data);
-        } catch (err) {
-            alert('Failed to accept proposal');
-        }
+        toast.custom((t) => (
+            <div
+                className={`${t.visible ? 'animate-enter' : 'animate-leave'
+                    } max - w - md w - full bg - white shadow - lg rounded - lg pointer - events - auto flex ring - 1 ring - black ring - opacity - 5`}
+            >
+                <div className="flex-1 w-0 p-4">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0 pt-0.5">
+                            <CheckCircle className="h-6 w-6 text-green-400" aria-hidden="true" />
+                        </div>
+                        <div className="ml-3 flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                                Confirm Acceptance
+                            </p>
+                            <p className="mt-1 text-sm text-gray-500">
+                                Are you sure you want to accept this proposal? This will start the engagement.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex border-l border-gray-200">
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await api.patch(`/proposals/${proposalId}`, { status: 'accepted' });
+                                toast.success('Proposal accepted! Engagement created.'); // Changed from alert to toast
+                                // Refresh proposals
+                                const proposalsRes = await api.get(`/proposals/job/${id}`);
+                                setProposals(proposalsRes.data);
+                                // Refresh job status
+                                const jobRes = await api.get(`/jobs/${id}`);
+                                setJob(jobRes.data);
+                            } catch (err) {
+                                toast.error('Failed to accept proposal'); // Changed from alert to toast
+                            }
+                        }}
+                        className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        Accept
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: Infinity });
     };
 
     if (loading) return (
@@ -298,9 +336,9 @@ const JobDetail = () => {
                                 {myProposal ? (
                                     <div>
                                         <h3 className="text-lg font-bold text-gray-900 mb-4">Your Proposal</h3>
-                                        <div className={`p-4 rounded-lg mb-4 flex items-center ${myProposal.status === 'accepted' ? 'bg-green-50 text-green-700' :
+                                        <div className={`p - 4 rounded - lg mb - 4 flex items - center ${myProposal.status === 'accepted' ? 'bg-green-50 text-green-700' :
                                             myProposal.status === 'rejected' ? 'bg-red-50 text-red-700' : 'bg-yellow-50 text-yellow-700'
-                                            }`}>
+                                            } `}>
                                             {myProposal.status === 'accepted' ? <CheckCircle className="w-5 h-5 mr-3" /> : <Clock className="w-5 h-5 mr-3" />}
                                             <span className="font-medium uppercase">{myProposal.status}</span>
                                         </div>

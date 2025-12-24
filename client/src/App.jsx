@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
+import { Toaster } from 'react-hot-toast';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -57,6 +58,7 @@ function App() {
           </Routes>
         </SocketProvider>
       </AuthProvider>
+      <Toaster position="top-right" />
     </Router>
   );
 }

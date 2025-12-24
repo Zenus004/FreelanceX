@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { motion } from 'framer-motion';
 import { Users, Briefcase, CheckCircle, DollarSign, LogOut, Shield, Trash2, Ban, Search } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
     const { logout } = useAuth();
@@ -31,13 +32,37 @@ const AdminDashboard = () => {
     }, []);
 
     const handleBanUser = async (userId) => {
-        if (!window.confirm('Are you sure you want to ban this user?')) return;
+        toast((t) => (
+            <div className="flex flex-col gap-2">
+                <span className="font-medium">Ban this user?</span>
+                <div className="flex gap-2 mt-1">
+                    <button
+                        className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            confirmBanUser(userId);
+                        }}
+                    >
+                        Ban
+                    </button>
+                    <button
+                        className="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300"
+                        onClick={() => toast.dismiss(t.id)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
+    };
+
+    const confirmBanUser = async (userId) => {
         try {
             await api.patch(`/admin/users/${userId}/ban`);
-            setUsers(users.map(u => u._id === userId ? { ...u, status: 'banned' } : u));
+            toast.success('User banned successfully');
+            setUsers(users.map(u => u._id === userId ? { ...u, isBanned: true } : u));
         } catch (error) {
-            console.error('Error banning user:', error);
-            alert('Failed to ban user');
+            toast.error(error.response?.data?.message || 'Failed to ban user');
         }
     };
 
