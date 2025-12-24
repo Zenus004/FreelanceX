@@ -6,6 +6,6 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 router.get('/', protect, authorize('admin'), getUsers);
 router.get('/:id', protect, getUserById);
 router.patch('/profile', protect, updateUserProfile);
-router.post('/add-funds', protect, addFunds);
+router.post('/deposit', protect, addFunds);
 
 module.exports = router;
