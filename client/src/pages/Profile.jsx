@@ -6,6 +6,7 @@ import FreelancerProfile from '../components/profile/FreelancerProfile';
 import ClientProfile from '../components/profile/ClientProfile';
 import { Loader2, Star, Mail, Briefcase, MapPin, Calendar, Edit, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
+import EditProfileModal from '../components/profile/EditProfileModal';
 
 const Profile = () => {
     const { id } = useParams();
@@ -67,15 +68,15 @@ const Profile = () => {
 
     const handleEdit = () => {
         setIsEditing(true);
-        // Implement modal logic or navigate to settings
-        toast('Edit functionality would open a modal here to update fields like Title, Bio, and Hourly Rate.', {
-            icon: 'ℹ️',
-            style: {
-                borderRadius: '10px',
-                background: '#333',
-                color: '#fff',
-            },
-        });
+    };
+
+    const handleSave = (updatedUser) => {
+        setProfileUser(updatedUser);
+        // Also update global auth user if it's the own profile to reflect side-wide changes (like name)
+        if (isOwnProfile && authUser._id === updatedUser._id) {
+            // Note: In a real app we might want to update context too, 
+            // but for now local state update is sufficient for the profile view
+        }
     };
 
     return (
@@ -83,7 +84,15 @@ const Profile = () => {
             {profileUser.role === 'client' ? (
                 <ClientProfile user={profileUser} isOwnProfile={isOwnProfile} onEdit={handleEdit} />
             ) : (
-                <FreelancerProfile user={profileUser} isOwnProfile={isOwnProfile} onEdit={handleEdit} />
+                <>
+                    <FreelancerProfile user={profileUser} isOwnProfile={isOwnProfile} onEdit={handleEdit} />
+                    <EditProfileModal
+                        user={profileUser}
+                        isOpen={isEditing}
+                        onClose={() => setIsEditing(false)}
+                        onSave={handleSave}
+                    />
+                </>
             )}
         </div>
     );

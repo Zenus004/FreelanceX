@@ -21,7 +21,7 @@ const FreelancerProfile = ({ user, isOwnProfile, onEdit }) => {
                             <div className="flex items-center mt-3 space-x-6">
                                 <span className="flex items-center text-gray-500">
                                     <MapPin className="w-4 h-4 mr-1.5" />
-                                    Remote
+                                    {profile.location || 'Remote'}
                                 </span>
                                 <span className="flex items-center text-yellow-600 font-medium">
                                     <Star className="w-4 h-4 mr-1.5 fill-current" />
