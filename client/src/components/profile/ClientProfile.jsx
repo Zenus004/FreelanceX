@@ -21,7 +21,7 @@ const ClientProfile = ({ user, isOwnProfile, onEdit }) => {
                                 <div className="flex items-center mt-2 space-x-6 text-gray-600">
                                     <span className="flex items-center">
                                         <MapPin className="w-4 h-4 mr-1.5" />
-                                        {profile.companyLocation || 'Remote'}
+                                        {profile.location || 'Remote'}
                                     </span>
                                     {profile.companyWebsite && (
                                         <a href={profile.companyWebsite} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:underline">
