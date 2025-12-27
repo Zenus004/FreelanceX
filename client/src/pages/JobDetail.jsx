@@ -14,7 +14,8 @@ import {
     ArrowLeft,
     Star,
     MessageSquare,
-    FileText
+    FileText,
+    Send
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import StatusBadge from '../components/dashboard/StatusBadge';
