@@ -48,6 +48,9 @@ export const AuthProvider = ({ children }) => {
             email: data.email,
             role: data.role
         });
+        // Fetch full profile to ensure consistent state
+        const profileRes = await api.get('/auth/profile');
+        setUser(profileRes.data);
     };
 
     const logout = async () => {
