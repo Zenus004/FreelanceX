@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema({
     profile: {
         bio: String,
         title: String, // e.g. "Senior React Developer"
+        location: String,
         skills: [String],
         portfolio: [{
             title: String,
