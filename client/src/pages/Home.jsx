@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, Shield, Zap, Globe, ArrowRight, Star, Users, Briefcase } from 'lucide-react';
+import { CheckCircle, Shield, Zap, Globe, ArrowRight, Star, Users, Briefcase, Menu, X } from 'lucide-react';
 
 const fadeInUp = {
     initial: { opacity: 0, y: 20 },
@@ -19,6 +19,8 @@ const staggerContainer = {
 
 const Home = () => {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -39,6 +41,8 @@ const Home = () => {
                             <a href="" className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-md shadow-indigo-200">F</a>
                             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">FreelanceX</span>
                         </div>
+
+                        {/* Desktop Menu */}
                         <div className="hidden md:flex items-center space-x-8">
                             <a href="#features" className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Features</a>
                             <a href="#how-it-works" className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">How it Works</a>
@@ -47,8 +51,56 @@ const Home = () => {
                                 Get Started
                             </Link>
                         </div>
+
+                        {/* Mobile Menu Button */}
+                        <div className="md:hidden flex items-center">
+                            <button
+                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                className="text-gray-700 hover:text-indigo-600 focus:outline-none"
+                            >
+                                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                {/* Mobile Menu Dropdown */}
+                {isMobileMenuOpen && (
+                    <div className="md:hidden bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-xl">
+                        <div className="px-4 pt-2 pb-6 space-y-2">
+                            <a
+                                href="#features"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-lg"
+                            >
+                                Features
+                            </a>
+                            <a
+                                href="#how-it-works"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-lg"
+                            >
+                                How it Works
+                            </a>
+                            <Link
+                                to="/login"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-lg"
+                            >
+                                Log In
+                            </Link>
+                            <div className="pt-2">
+                                <Link
+                                    to="/register"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="block w-full text-center px-5 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg"
+                                >
+                                    Get Started
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </nav>
 
             {/* Interactive Mouse Glow - Global Fixed Background */}
