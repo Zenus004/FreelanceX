@@ -84,11 +84,11 @@ const JobDetail = () => {
                 deliveryDays: Number(deliveryDays),
                 coverLetter
             });
-            toast.success('Proposal submitted successfully!'); // Changed from alert to toast
+            toast.success('Proposal submitted successfully!');
             navigate('/dashboard');
         } catch (err) {
             setSubmitError(err.response?.data?.message || 'Failed to submit proposal');
-            toast.error(err.response?.data?.message || 'Failed to submit proposal'); // Added toast for error
+            toast.error(err.response?.data?.message || 'Failed to submit proposal');
             setSubmitting(false);
         }
     };
@@ -109,38 +109,40 @@ const JobDetail = () => {
                                 Confirm Acceptance
                             </p>
                             <p className="mt-1 text-sm text-gray-500">
-                                Are you sure you want to accept this proposal? This will start the engagement.
+                                Are you sure you want to accept this proposal?
                             </p>
                         </div>
                     </div>
                 </div>
                 <div className="flex border-l border-gray-200">
-                    <button
-                        onClick={async () => {
-                            toast.dismiss(t.id);
-                            try {
-                                await api.patch(`/proposals/${proposalId}`, { status: 'accepted' });
-                                toast.success('Proposal accepted! Engagement created.'); // Changed from alert to toast
-                                // Refresh proposals
-                                const proposalsRes = await api.get(`/proposals/job/${id}`);
-                                setProposals(proposalsRes.data);
-                                // Refresh job status
-                                const jobRes = await api.get(`/jobs/${id}`);
-                                setJob(jobRes.data);
-                            } catch (err) {
-                                toast.error('Failed to accept proposal'); // Changed from alert to toast
-                            }
-                        }}
-                        className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        Accept
-                    </button>
-                    <button
-                        onClick={() => toast.dismiss(t.id)}
-                        className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        Cancel
-                    </button>
+                    <div className="flex flex-col w-full h-full">
+                        <button
+                            onClick={async () => {
+                                toast.dismiss(t.id);
+                                try {
+                                    await api.patch(`/proposals/${proposalId}`, { status: 'accepted' });
+                                    toast.success('Proposal accepted! Engagement created.');
+                                    // Refresh proposals
+                                    const proposalsRes = await api.get(`/proposals/job/${id}`);
+                                    setProposals(proposalsRes.data);
+                                    // Refresh job status
+                                    const jobRes = await api.get(`/jobs/${id}`);
+                                    setJob(jobRes.data);
+                                } catch (err) {
+                                    toast.error('Failed to accept proposal');
+                                }
+                            }}
+                            className="w-full border-b border-gray-200 p-3 text-sm font-medium text-indigo-600 hover:text-indigo-500 hover:bg-gray-50 focus:outline-none"
+                        >
+                            Accept
+                        </button>
+                        <button
+                            onClick={() => toast.dismiss(t.id)}
+                            className="w-full p-3 text-sm font-medium text-gray-700 hover:text-gray-500 hover:bg-gray-50 focus:outline-none"
+                        >
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
         ), { duration: Infinity });

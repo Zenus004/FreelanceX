@@ -12,10 +12,18 @@ export const SocketProvider = ({ children }) => {
 
     useEffect(() => {
         if (user) {
-            const newSocket = io('http://localhost:5000', {
-                withCredentials: true
+            // Remove /api from the end of the URL if present to get the root domain
+            const socketUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '');
+
+            const newSocket = io(socketUrl, {
+                withCredentials: true,
+                transports: ['websocket', 'polling'] // Explicitly enable websocket and polling
             });
             setSocket(newSocket);
+
+            newSocket.on('connect_error', (err) => {
+                console.error('Socket connection error:', err);
+            });
 
             return () => newSocket.close();
         } else {
