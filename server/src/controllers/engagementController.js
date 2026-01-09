@@ -169,7 +169,6 @@ module.exports = {
     getEngagement,
     createMilestone,
     approveMilestone,
-    approveMilestone,
     getEngagementByJob,
     completeEngagement
 };
